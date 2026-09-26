@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICU SedoAnalgesia - Chỉnh Liều An Thần & Giảm Đau Lâm Sàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            medical: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar and range input aesthetics */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 22px;
+      width: 22px;
+      border-radius: 50%;
+      background: #0284c7;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      border: 2px solid #ffffff;
+      margin-top: -7px;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 8px;
+      cursor: pointer;
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .dark input[type=range]::-webkit-slider-runnable-track {
+      background: #334155;
+    }
+    .pump-screen {
+      background: linear-gradient(180deg, #09171f 0%, #030a0f 100%);
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(2, 132, 199, 0.15);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #94a3b8;
+      border-radius: 9999px;
+    }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans transition-colors duration-200">
+
+  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            ICU SedoAnalgesia <span class="text-xs px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 font-medium">PADIS v2025</span>
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Chỉnh liều 5 thuốc An thần & Giảm đau theo cân nặng</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition" title="Đổi giao diện Sáng/Tối">
+          <svg id="sunIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+          <svg id="moonIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+        </button>
+
+        <button onclick="openModal('infoModal')" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900 transition flex items-center gap-1.5 border border-sky-200 dark:border-sky-800">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Thang điểm RASS</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Patient Condition & Weight Card -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+        
+        <!-- Weight Input -->
+        <div class="lg:col-span-5 space-y-2">
+          <div class="flex justify-between items-center">
+            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <svg class="w-4 h-4 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+              CÂN NẶNG BỆNH NHÂN (Lâm sàng)
+            </label>
+            <div class="flex items-center space-x-1">
+              <input type="number" id="weightInput" min="20" max="180" step="1" value="60" 
+                class="w-20 px-2 py-1 text-center font-bold text-lg font-mono text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-slate-800 rounded-lg border border-sky-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+              <span class="text-sm font-medium text-slate-500">kg</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="text-xs text-slate-400 font-mono">30kg</span>
+            <input type="range" id="weightSlider" min="30" max="130" value="60" class="w-full" oninput="updateWeightFromSlider(this.value)">
+            <span class="text-xs text-slate-400 font-mono">130kg</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <span class="text-xs text-slate-400 self-center">Chọn nhanh:</span>
+            <button onclick="setWeight(45)" class="px-2 py-0.5 text-xs rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">45kg</button>
+            <button onclick="setWeight(50)" class="px-2 py-0.5 text-xs rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">50kg</button>
+            <button onclick="setWeight(60)" class="px-2 py-0.5 text-xs rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">60kg</button>
+            <button onclick="setWeight(70)" class="px-2 py-0.5 text-xs rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">70kg</button>
+            <button onclick="setWeight(80)" class="px-2 py-0.5 text-xs rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">80kg</button>
+          </div>
+        </div>
+
+        <!-- Clinical Flags (Interactive Safety Conditions) -->
+        <div class="lg:col-span-7 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800 pt-4 lg:pt-0 lg:pl-6 space-y-2">
+          <label class="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Yếu tố nguy cơ & Bệnh cảnh đặc biệt (Tự động điều chỉnh khuyến cáo)
+          </label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <!-- Flag 1: Renal Failure -->
+            <label class="relative flex items-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 cursor-pointer transition select-none group">
+              <input type="checkbox" id="flagAki" onchange="recalculateAll()" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300 dark:border-slate-600">
+              <span class="ml-2 text-xs font-medium text-slate-700 dark:text-slate-300 group-hover:text-rose-600 dark:group-hover:text-rose-400">Suy thận / AKI</span>
+            </label>
+
+            <!-- Flag 2: Shock / Hypotension -->
+            <label class="relative flex items-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:bg-amber-50/50 dark:hover:bg-amber-950/30 cursor-pointer transition select-none group">
+              <input type="checkbox" id="flagShock" onchange="recalculateAll()" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 dark:border-slate-600">
+              <span class="ml-2 text-xs font-medium text-slate-700 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-400">Tụt HA / Sốc</span>
+            </label>
+
+            <!-- Flag 3: Elderly / Frail -->
+            <label class="relative flex items-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 cursor-pointer transition select-none group">
+              <input type="checkbox" id="flagElderly" onchange="recalculateAll()" class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300 dark:border-slate-600">
+              <span class="ml-2 text-xs font-medium text-slate-700 dark:text-slate-300 group-hover:text-sky-600 dark:group-hover:text-sky-400">Tuổi &ge; 65 / Kiệt</span>
+            </label>
+
+            <!-- Flag 4: Hepatic Failure -->
+            <label class="relative flex items-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 cursor-pointer transition select-none group">
+              <input type="checkbox" id="flagLiver" onchange="recalculateAll()" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 dark:border-slate-600">
+              <span class="ml-2 text-xs font-medium text-slate-700 dark:text-slate-300 group-hover:text-purple-600 dark:group-hover:text-purple-400">Suy gan / Xơ gan</span>
+            </label>
+          </div>
+          <!-- Real-time Clinical Banner Warning -->
+          <div id="clinicalAlertBanner" class="hidden p-2.5 rounded-lg text-xs font-medium flex items-center gap-2"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Navigation Tabs for Drugs & Overview -->
+    <div class="flex space-x-1 p-1 bg-slate-200/80 dark:bg-slate-800/80 rounded-xl overflow-x-auto custom-scrollbar">
+      <button onclick="switchTab('propofol')" id="tabBtn-propofol" class="drug-tab-btn flex-1 min-w-[130px] py-2 px-3 text-xs sm:text-sm font-semibold rounded-lg transition duration-150 flex items-center justify-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span> Propofol
+      </button>
+      <button onclick="switchTab('midazolam')" id="tabBtn-midazolam" class="drug-tab-btn flex-1 min-w-[130px] py-2 px-3 text-xs sm:text-sm font-semibold rounded-lg transition duration-150 flex items-center justify-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Midazolam
+      </button>
+      <button onclick="switchTab('diazepam')" id="tabBtn-diazepam" class="drug-tab-btn flex-1 min-w-[130px] py-2 px-3 text-xs sm:text-sm font-semibold rounded-lg transition duration-150 flex items-center justify-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span> Diazepam
+      </button>
+      <button onclick="switchTab('fentanyl')" id="tabBtn-fentanyl" class="drug-tab-btn flex-1 min-w-[130px] py-2 px-3 text-xs sm:text-sm font-semibold rounded-lg transition duration-150 flex items-center justify-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Fentanyl
+      </button>
+      <button onclick="switchTab('morphine')" id="tabBtn-morphine" class="drug-tab-btn flex-1 min-w-[130px] py-2 px-3 text-xs sm:text-sm font-semibold rounded-lg transition duration-150 flex items-center justify-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Morphine
+      </button>
+      <button onclick="switchTab('overview')" id="tabBtn-overview" class="drug-tab-btn flex-1 min-w-[140px] py-2 px-3 text-xs sm:text-sm font-semibold rounded-lg transition duration-150 flex items-center justify-center gap-1.5">
+        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Bảng Tổng Hợp
+      </button>
+    </div>
+
+    <!-- DRUG VIEW 1: PROPOFOL -->
+    <div id="view-propofol" class="drug-view space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Dose Titration Controls & Pump Screen -->
+        <div class="lg:col-span-7 space-y-5">
+          <!-- Drug Badge & Identification -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300">Gây mê tĩnh mạch / Hypnotic</span>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mt-1">PROPOFOL 1%</h2>
+              </div>
+              <div class="text-right">
+                <span class="text-sm font-mono font-bold text-slate-600 dark:text-slate-300">Ống 200mg / 20ml</span>
+                <div class="text-xs text-slate-400">Nồng độ nguyên chất: 10 mg/ml</div>
+              </div>
+            </div>
+
+            <!-- Syringe Pump Visualizer Box -->
+            <div class="pump-screen rounded-xl p-5 text-white border border-cyan-900/60 relative overflow-hidden">
+              <div class="flex items-center justify-between text-xs text-sky-400 font-mono tracking-wider mb-2">
+                <span>SYRINGE PUMP B.BRAUN / TERUMO</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> INFUSING</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div>
+                  <div class="text-xs text-slate-400">TỐC ĐỘ BƠM TIÊM ĐIỆN</div>
+                  <div class="flex items-baseline space-x-2">
+                    <span id="propofol-pump-rate" class="text-4xl sm:text-5xl font-extrabold font-mono text-cyan-400 tracking-tight">0.0</span>
+                    <span class="text-lg font-mono text-slate-300">ml/h</span>
+                  </div>
+                  <div class="text-xs text-slate-400 mt-1">Dung dịch: <span class="text-sky-300 font-semibold">Nguyên chất 1% (10 mg/ml)</span></div>
+                </div>
+                <div class="border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4 space-y-1 text-xs font-mono">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Liều theo mcg:</span>
+                    <span id="propofol-disp-mcg" class="text-white font-bold">20.0 mcg/kg/phút</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Liều theo mg:</span>
+                    <span id="propofol-disp-mg" class="text-white font-bold">1.20 mg/kg/giờ</span>
+                  </div>
+                  <div class="flex justify-between text-amber-300">
+                    <span>Năng lượng Lipid:</span>
+                    <span id="propofol-disp-kcal" class="font-bold">0 kcal/ngày</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Infusion Rate Slider -->
+            <div class="space-y-3 pt-2">
+              <div class="flex justify-between items-center">
+                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Chuẩn độ liều duy trì thở máy ICU:
+                </label>
+                <div class="flex items-center space-x-2">
+                  <input type="number" id="propofol-slider-input" min="5" max="80" step="5" value="20" onchange="setPropofolDose(this.value)"
+                    class="w-16 px-2 py-0.5 text-center font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-slate-800 rounded border border-teal-200 dark:border-slate-700">
+                  <span class="text-xs font-medium text-slate-500">µg/kg/phút</span>
+                </div>
+              </div>
+              <input type="range" id="propofol-range" min="5" max="80" step="1" value="20" class="w-full" oninput="setPropofolDose(this.value)">
+              
+              <!-- Presets -->
+              <div class="grid grid-cols-4 gap-2 pt-1">
+                <button onclick="setPropofolDose(5)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-300 font-medium">5 µg (Khởi đầu)</button>
+                <button onclick="setPropofolDose(20)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-300 font-medium">20 µg (An thần nhẹ)</button>
+                <button onclick="setPropofolDose(40)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-300 font-medium">40 µg (An thần sâu)</button>
+                <button onclick="setPropofolDose(67)" class="py-1 px-2 text-xs rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-medium hover:bg-rose-100">67 µg (4mg/kg/h)</button>
+              </div>
+            </div>
+
+            <!-- Bolus / Induction Section -->
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Liều Bolus Khởi Mê / Đặt Ống NKQ Nhanh (RSI)</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                  <div class="text-xs text-slate-500 dark:text-slate-400">Liều chuẩn (1.5 - 2.5 mg/kg):</div>
+                  <div class="text-lg font-bold font-mono text-teal-600 dark:text-teal-400" id="propofol-bolus-standard">90 - 150 mg</div>
+                  <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-0.5" id="propofol-bolus-ml-std">Tương đương: 9.0 - 15.0 ml (IV chậm 60s)</div>
+                </div>
+                <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                  <div class="text-xs text-amber-700 dark:text-amber-300 font-medium">Người già / Sốc (1.0 - 1.5 mg/kg):</div>
+                  <div class="text-lg font-bold font-mono text-amber-600 dark:text-amber-400" id="propofol-bolus-frail">60 - 90 mg</div>
+                  <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-0.5" id="propofol-bolus-ml-frail">Tương đương: 6.0 - 9.0 ml (rất chậm)</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Safety Notes, PRIS, Protocol Guidance -->
+        <div class="lg:col-span-5 space-y-4">
+          <!-- Dynamic Safety Alert for Propofol -->
+          <div id="propofol-alert" class="p-4 rounded-2xl border transition-all duration-200">
+            <!-- Injected via JavaScript -->
+          </div>
+
+          <!-- Clinical Protocol Summary Card -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Lưu ý lâm sàng độc quyền (Clinical Pearls)
+            </h4>
+            <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2 list-disc list-inside">
+              <li><strong class="text-slate-800 dark:text-slate-100">Không có tác dụng giảm đau:</strong> Phải kiểm soát đau bằng Opioid (Fentanyl) trước khi tăng liều Propofol.</li>
+              <li><strong class="text-slate-800 dark:text-slate-100">Hội chứng PRIS:</strong> Nguy cơ bùng phát khi truyền &gt; 4 - 5 mg/kg/h kéo dài &gt; 48h. Cần theo dõi Lactate máu, Khí máu ĐM, CK và Triglyceride mỗi 48h.</li>
+              <li><strong class="text-slate-800 dark:text-slate-100">Vô trùng & Calo:</strong> Nhũ dịch lipid thuận lợi cho vi khuẩn phát triển; bắt buộc thay dây truyền và lọ thuốc mỗi 12 giờ. $1\text{ ml} \approx 1.1\text{ kcal}$.</li>
+            </ul>
+            <div class="pt-2">
+              <button onclick="copyOrder('Propofol')" class="w-full py-2 px-3 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                Copy Y Lệnh Bơm Tiêm Điện Propofol
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DRUG VIEW 2: MIDAZOLAM -->
+    <div id="view-midazolam" class="drug-view space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">Benzodiazepine tác dụng ngắn</span>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mt-1">MIDAZOLAM</h2>
+              </div>
+              <div class="text-right">
+                <span class="text-sm font-mono font-bold text-slate-600 dark:text-slate-300">Ống 5mg / 5ml (hoặc 5mg/1ml)</span>
+                <div class="text-xs text-slate-400">Gây quên thuận chiều mạnh</div>
+              </div>
+            </div>
+
+            <!-- Midazolam Dilution Selector -->
+            <div class="flex items-center space-x-2 text-xs">
+              <span class="font-semibold text-slate-600 dark:text-slate-400">Cách pha Bơm Tiêm Điện:</span>
+              <button onclick="setMidazolamRecipe('1mg_ml')" id="mida-recipe-1" class="px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-amber-500 text-white border-amber-600">50mg/50ml (1 mg/ml)</button>
+              <button onclick="setMidazolamRecipe('05mg_ml')" id="mida-recipe-05" class="px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">25mg/50ml (0.5 mg/ml)</button>
+            </div>
+
+            <!-- Pump Box -->
+            <div class="pump-screen rounded-xl p-5 text-white border border-amber-900/60 relative overflow-hidden">
+              <div class="flex items-center justify-between text-xs text-amber-400 font-mono tracking-wider mb-2">
+                <span>SYRINGE PUMP B.BRAUN / TERUMO</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> INFUSING</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div>
+                  <div class="text-xs text-slate-400">TỐC ĐỘ BƠM TIÊM ĐIỆN</div>
+                  <div class="flex items-baseline space-x-2">
+                    <span id="midazolam-pump-rate" class="text-4xl sm:text-5xl font-extrabold font-mono text-amber-400 tracking-tight">0.0</span>
+                    <span class="text-lg font-mono text-slate-300">ml/h</span>
+                  </div>
+                  <div class="text-xs text-slate-400 mt-1">Nồng độ bơm tiêm: <span id="midazolam-conc-disp" class="text-amber-300 font-semibold">1.0 mg/ml</span></div>
+                </div>
+                <div class="border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4 space-y-1 text-xs font-mono">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Liều chỉ định:</span>
+                    <span id="midazolam-disp-mgkgh" class="text-white font-bold">0.05 mg/kg/giờ</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Tổng liều/giờ:</span>
+                    <span id="midazolam-disp-tot-mgh" class="text-white font-bold">3.0 mg/giờ</span>
+                  </div>
+                  <div class="flex justify-between text-rose-300">
+                    <span>Nguy cơ tích lũy:</span>
+                    <span class="font-bold">1-OH-midazolam</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Midazolam Infusion Slider -->
+            <div class="space-y-3 pt-2">
+              <div class="flex justify-between items-center">
+                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Liều duy trì an thần thở máy:
+                </label>
+                <div class="flex items-center space-x-2">
+                  <input type="number" id="midazolam-slider-input" min="0.01" max="0.2" step="0.01" value="0.05" onchange="setMidazolamDose(this.value)"
+                    class="w-16 px-2 py-0.5 text-center font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-slate-800 rounded border border-amber-200 dark:border-slate-700">
+                  <span class="text-xs font-medium text-slate-500">mg/kg/giờ</span>
+                </div>
+              </div>
+              <input type="range" id="midazolam-range" min="0.01" max="0.2" step="0.01" value="0.05" class="w-full" oninput="setMidazolamDose(this.value)">
+              
+              <div class="grid grid-cols-4 gap-2 pt-1">
+                <button onclick="setMidazolamDose(0.02)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-300 font-medium">0.02 (Khởi đầu)</button>
+                <button onclick="setMidazolamDose(0.05)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-300 font-medium">0.05 (Trung bình)</button>
+                <button onclick="setMidazolamDose(0.10)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-300 font-medium">0.10 (Liều cao)</button>
+                <button onclick="setMidazolamDose(0.15)" class="py-1 px-2 text-xs rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-medium hover:bg-rose-100">0.15 (Tối đa)</button>
+              </div>
+            </div>
+
+            <!-- Midazolam Bolus Section -->
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Liều Bolus / Cắt Cơn Co Giật / Thủ Thuật</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                  <div class="text-xs text-slate-500 dark:text-slate-400">An thần thủ thuật / Tiền mê (0.02 - 0.05 mg/kg):</div>
+                  <div class="text-lg font-bold font-mono text-amber-600 dark:text-amber-400" id="midazolam-bolus-proc">1.2 - 3.0 mg</div>
+                  <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-0.5" id="midazolam-bolus-proc-ml">Tương đương: 1.2 - 3.0 ml (loại 1mg/ml) IV trong 2 phút</div>
+                </div>
+                <div class="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+                  <div class="text-xs text-purple-700 dark:text-purple-300 font-medium">Cắt cơn co giật cấp (0.1 - 0.2 mg/kg):</div>
+                  <div class="text-lg font-bold font-mono text-purple-600 dark:text-purple-400" id="midazolam-bolus-seizure">6.0 - 12.0 mg</div>
+                  <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-0.5" id="midazolam-bolus-seizure-ml">Tiêm IV chậm (hoặc tiêm bắp 10mg khi chưa có IV)</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Midazolam Pearls & Antidote -->
+        <div class="lg:col-span-5 space-y-4">
+          <div id="midazolam-alert" class="p-4 rounded-2xl border transition-all duration-200">
+            <!-- Dynamic condition alert -->
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Cảnh báo PADIS & Thuốc giải độc Flumazenil
+            </h4>
+            <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2 list-disc list-inside">
+              <li><strong class="text-slate-800 dark:text-slate-100">Hạn chế duy trì thường quy:</strong> Benzodiazepine làm tăng tỷ lệ Mê sảng (Delirium) và kéo dài ngày thở máy. Tránh truyền &gt; 48 giờ.</li>
+              <li><strong class="text-slate-800 dark:text-slate-100">Tích lũy chất chuyển hóa:</strong> 1-OH-midazolam thải qua thận; bệnh nhân suy thận sẽ bị hôn mê kéo dài nhiều ngày sau ngắt truyền.</li>
+              <li><strong class="text-rose-600 dark:text-rose-400">Thuốc giải độc (Flumazenil):</strong> Ống 0.5mg/5ml. Khởi đầu 0.2mg IV trong 15s. Lặp lại 0.1 - 0.2mg mỗi 60s (tối đa 1mg). Cảnh báo nguy cơ co giật kịch phát ở người nghiện benzo/động kinh!</li>
+            </ul>
+            <div class="pt-2">
+              <button onclick="copyOrder('Midazolam')" class="w-full py-2 px-3 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                Copy Y Lệnh Bơm Tiêm Điện Midazolam
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DRUG VIEW 3: DIAZEPAM -->
+    <div id="view-diazepam" class="drug-view space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300">Benzodiazepine tác dụng kéo dài</span>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mt-1">DIAZEPAM</h2>
+              </div>
+              <div class="text-right">
+                <span class="text-sm font-mono font-bold text-slate-600 dark:text-slate-300">Ống 10mg / 2ml</span>
+                <div class="text-xs text-slate-400">Nồng độ: 5 mg/ml (Dung môi Propylene Glycol)</div>
+              </div>
+            </div>
+
+            <!-- Absolute Warning against continuous infusion -->
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 space-y-2">
+              <div class="flex items-center gap-2 font-bold text-sm">
+                <svg class="w-5 h-5 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                KHÔNG TRUYỀN TĨNH MẠCH DUY TRÌ LIÊN TỤC TRONG ICU!
+              </div>
+              <p class="text-xs leading-relaxed">
+                Diazepam có thời gian bán thải cực dài ($24 - 48\text{h}$) và tạo chất chuyển hóa có hoạt tính kéo dài tới $100\text{h}$ (Nordiazepam). Thuốc chỉ được sử dụng dạng <strong>tiêm ngắt quãng (Bolus)</strong> cho các chỉ định đặc hiệu.
+              </p>
+            </div>
+
+            <!-- Indications & Bolus Dosing Calculation -->
+            <div class="space-y-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Liều Bolus Theo Từng Chỉ Định Cụ Thể</h3>
+              
+              <!-- Indication 1: Seizure -->
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-indigo-700 dark:text-indigo-400">1. CẮT CƠN CO GIẬT / CƠN ĐỘNG KINH LIÊN TỤC:</span>
+                  <span class="text-xs font-mono font-bold text-slate-500">0.1 - 0.2 mg/kg</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <div class="text-xl font-bold font-mono text-indigo-600 dark:text-indigo-400" id="diazepam-seizure-dose">6.0 - 10.0 mg</div>
+                  <div class="text-sm font-mono text-slate-600 dark:text-slate-300" id="diazepam-seizure-ml">1.2 - 2.0 ml (Tiêm IV chậm &le; 2 mg/phút)</div>
+                </div>
+                <div class="text-xs text-slate-500">Tiêm trực tiếp tĩnh mạch lớn trong tối thiểu 2 - 3 phút. Có thể lặp lại sau 10 - 15 phút nếu chưa dứt cơn (tối đa 30mg).</div>
+              </div>
+
+              <!-- Indication 2: Alcohol Withdrawal -->
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-amber-700 dark:text-amber-400">2. HỘI CHỨNG CAI RƯỢU CẤP (DELIRIUM TREMENS):</span>
+                  <span class="text-xs font-mono font-bold text-slate-500">Phác đồ nạp theo triệu chứng</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <div class="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">10 - 20 mg / lần</div>
+                  <div class="text-sm font-mono text-slate-600 dark:text-slate-300">2.0 - 4.0 ml IV chậm mỗi 1 - 2 giờ</div>
+                </div>
+                <div class="text-xs text-slate-500">Đánh giá theo thang điểm CIWA-Ar cho đến khi bệnh nhân yên tĩnh nhưng vẫn đánh thức được.</div>
+              </div>
+
+              <!-- Indication 3: Muscle Spasm / Tetanus -->
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-slate-700 dark:text-slate-300">3. CO CỨNG CƠ NẶNG / BỆNH UỐN VÁN:</span>
+                  <span class="text-xs font-mono font-bold text-slate-500">5 - 10 mg / liều</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <div class="text-xl font-bold font-mono text-slate-700 dark:text-slate-300">5 - 10 mg</div>
+                  <div class="text-sm font-mono text-slate-600 dark:text-slate-300">1.0 - 2.0 ml IV chậm hoặc IM mỗi 4 - 6 giờ</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Diazepam Pearls & Pitfalls -->
+        <div class="lg:col-span-5 space-y-4">
+          <div id="diazepam-alert" class="p-4 rounded-2xl border transition-all duration-200">
+            <!-- Dynamic condition alert -->
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Cạm bẫy tiêm Diazepam (Pitfalls)
+            </h4>
+            <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2 list-disc list-inside">
+              <li><strong class="text-rose-600 dark:text-rose-400">Đau buốt & Viêm tắc tĩnh mạch:</strong> Thuốc chứa dung môi Propylene glycol gây kích ứng dữ dội nội mạc mạch. <strong>Bắt buộc tiêm tĩnh mạch lớn, tiêm chậm (&le; 2-5 mg/phút)</strong>. Tránh tiêm tĩnh mạch nhỏ mu bàn tay.</li>
+              <li><strong class="text-slate-800 dark:text-slate-100">Không pha loãng tùy tiện:</strong> Thuốc dễ kết tủa trắng đục khi pha vào NaCl 0.9% hoặc Glucose 5%. Tốt nhất tiêm trực tiếp nguyên chất qua cổng tiêm gần vein.</li>
+              <li><strong class="text-slate-800 dark:text-slate-100">Độc tính Propylene Glycol:</strong> Khi dùng liều cao lặp lại, có thể gây toan chuyển hóa tăng Anion Gap và suy thận cấp.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DRUG VIEW 4: FENTANYL -->
+    <div id="view-fentanyl" class="drug-view space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">Opioid tổng hợp mạnh (100x Morphine)</span>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mt-1">FENTANYL</h2>
+              </div>
+              <div class="text-right">
+                <span class="text-sm font-mono font-bold text-slate-600 dark:text-slate-300">Ống 250 µg / 5 ml</span>
+                <div class="text-xs text-slate-400">Nồng độ nguyên chất: 50 µg/ml</div>
+              </div>
+            </div>
+
+            <!-- Fentanyl Recipe Selector -->
+            <div class="flex items-center space-x-2 text-xs">
+              <span class="font-semibold text-slate-600 dark:text-slate-400">Pha Bơm Tiêm Điện:</span>
+              <button onclick="setFentanylRecipe('dilute10')" id="fenta-recipe-10" class="px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-blue-600 text-white border-blue-700">2 ống (500µg) + NaCl 0.9% = 50ml (10 µg/ml)</button>
+              <button onclick="setFentanylRecipe('pure50')" id="fenta-recipe-50" class="px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">Nguyên chất (50 µg/ml)</button>
+            </div>
+
+            <!-- Fentanyl Pump Visualizer -->
+            <div class="pump-screen rounded-xl p-5 text-white border border-blue-900/60 relative overflow-hidden">
+              <div class="flex items-center justify-between text-xs text-blue-400 font-mono tracking-wider mb-2">
+                <span>SYRINGE PUMP B.BRAUN / TERUMO</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> INFUSING</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div>
+                  <div class="text-xs text-slate-400">TỐC ĐỘ BƠM TIÊM ĐIỆN</div>
+                  <div class="flex items-baseline space-x-2">
+                    <span id="fentanyl-pump-rate" class="text-4xl sm:text-5xl font-extrabold font-mono text-blue-400 tracking-tight">0.0</span>
+                    <span class="text-lg font-mono text-slate-300">ml/h</span>
+                  </div>
+                  <div class="text-xs text-slate-400 mt-1">Nồng độ bơm tiêm: <span id="fentanyl-conc-disp" class="text-blue-300 font-semibold">10 µg/ml</span></div>
+                </div>
+                <div class="border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4 space-y-1 text-xs font-mono">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Liều chỉ định:</span>
+                    <span id="fentanyl-disp-mcgkgh" class="text-white font-bold">1.0 µg/kg/giờ</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Tổng liều/giờ:</span>
+                    <span id="fentanyl-disp-tot-mcgh" class="text-white font-bold">60.0 µg/giờ</span>
+                  </div>
+                  <div class="flex justify-between text-emerald-300">
+                    <span>Huyết động:</span>
+                    <span class="font-bold">Ổn định (Không giải phóng Histamine)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fentanyl Slider -->
+            <div class="space-y-3 pt-2">
+              <div class="flex justify-between items-center">
+                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Duy trì giảm đau - an thần (Analgosedation):
+                </label>
+                <div class="flex items-center space-x-2">
+                  <input type="number" id="fentanyl-slider-input" min="0.5" max="5.0" step="0.1" value="1.0" onchange="setFentanylDose(this.value)"
+                    class="w-16 px-2 py-0.5 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 rounded border border-blue-200 dark:border-slate-700">
+                  <span class="text-xs font-medium text-slate-500">µg/kg/giờ</span>
+                </div>
+              </div>
+              <input type="range" id="fentanyl-range" min="0.5" max="5.0" step="0.1" value="1.0" class="w-full" oninput="setFentanylDose(this.value)">
+              
+              <div class="grid grid-cols-4 gap-2 pt-1">
+                <button onclick="setFentanylDose(0.7)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-700 dark:text-slate-300 font-medium">0.7 µg (Khởi đầu)</button>
+                <button onclick="setFentanylDose(1.5)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-700 dark:text-slate-300 font-medium">1.5 µg (Chuẩn ICU)</button>
+                <button onclick="setFentanylDose(3.0)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-700 dark:text-slate-300 font-medium">3.0 µg (Đồng bộ máy)</button>
+                <button onclick="setFentanylDose(5.0)" class="py-1 px-2 text-xs rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-medium hover:bg-rose-100">5.0 µg (Liều cao)</button>
+              </div>
+            </div>
+
+            <!-- Fentanyl Bolus Section -->
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Liều Bolus Cắt Cơn Đau / Đặt Ống NKQ</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                  <div class="text-xs text-slate-500 dark:text-slate-400">Khởi mê RSI / Thủ thuật (1 - 2 µg/kg):</div>
+                  <div class="text-lg font-bold font-mono text-blue-600 dark:text-blue-400" id="fentanyl-bolus-rsi">60 - 120 µg</div>
+                  <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-0.5" id="fentanyl-bolus-rsi-ml">Tương đương: 1.2 - 2.4 ml (Ống 50µg/ml) tiêm chậm &gt; 1-2 phút</div>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                  <div class="text-xs text-slate-500 dark:text-slate-400">Cơn đau cấp ICU (0.35 - 0.5 µg/kg):</div>
+                  <div class="text-lg font-bold font-mono text-sky-600 dark:text-sky-400" id="fentanyl-bolus-pain">21 - 30 µg</div>
+                  <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-0.5" id="fentanyl-bolus-pain-ml">Tương đương: 0.4 - 0.6 ml tiêm tĩnh mạch khi đau</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Fentanyl Safety, Chest Wall Rigidity & Renal Advantage -->
+        <div class="lg:col-span-5 space-y-4">
+          <div id="fentanyl-alert" class="p-4 rounded-2xl border transition-all duration-200">
+            <!-- Dynamic condition alert -->
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Đặc điểm nổi trội & Cảnh báo an toàn
+            </h4>
+            <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2 list-disc list-inside">
+              <li><strong class="text-emerald-600 dark:text-emerald-400">Lựa chọn số 1 khi suy thận:</strong> Fentanyl chuyển hóa qua gan thành Norfentanyl bất hoạt, không có chất chuyển hóa độc tích lũy ở thận như Morphine.</li>
+              <li><strong class="text-emerald-600 dark:text-emerald-400">Ổn định huyết động:</strong> Không phóng thích Histamine, dung nạp huyết động rất tốt ở bệnh nhân sốc hoặc co thắt phế quản.</li>
+              <li><strong class="text-rose-600 dark:text-rose-400">Cứng lồng ngực (Chest Wall Rigidity):</strong> Xảy ra khi tiêm tĩnh mạch quá nhanh liều cao; cơ hoành và cơ liên sườn co cứng không thể bóp bóng qua mask. <strong>Bắt buộc tiêm chậm tối thiểu 1 - 2 phút!</strong></li>
+              <li><strong class="text-slate-800 dark:text-slate-100">Bão hòa mô mỡ:</strong> Khi truyền &gt; 48 - 72h, thuốc tích lũy nhiều trong mô mỡ làm bệnh nhân chậm tỉnh sau ngắt truyền.</li>
+            </ul>
+            <div class="pt-2">
+              <button onclick="copyOrder('Fentanyl')" class="w-full py-2 px-3 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                Copy Y Lệnh Bơm Tiêm Điện Fentanyl
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DRUG VIEW 5: MORPHINE -->
+    <div id="view-morphine" class="drug-view space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300">Opioid tự nhiên kinh điển</span>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mt-1">MORPHINE</h2>
+              </div>
+              <div class="text-right">
+                <span class="text-sm font-mono font-bold text-slate-600 dark:text-slate-300">Ống 10mg / 1ml</span>
+                <div class="text-xs text-slate-400">Giảm tiền gánh / Giảm khó thở cấp</div>
+              </div>
+            </div>
+
+            <!-- Morphine Recipe Selector -->
+            <div class="flex items-center space-x-2 text-xs">
+              <span class="font-semibold text-slate-600 dark:text-slate-400">Cách pha Bơm Tiêm Điện:</span>
+              <button onclick="setMorphineRecipe('1mg_ml')" id="morph-recipe-1" class="px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-rose-600 text-white border-rose-700">5 ống (50mg) + NaCl 0.9% = 50ml (1 mg/ml)</button>
+              <button onclick="setMorphineRecipe('04mg_ml')" id="morph-recipe-04" class="px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">2 ống (20mg) + NaCl 0.9% = 50ml (0.4 mg/ml)</button>
+            </div>
+
+            <!-- Pump Box -->
+            <div class="pump-screen rounded-xl p-5 text-white border border-rose-900/60 relative overflow-hidden">
+              <div class="flex items-center justify-between text-xs text-rose-400 font-mono tracking-wider mb-2">
+                <span>SYRINGE PUMP B.BRAUN / TERUMO</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> INFUSING</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div>
+                  <div class="text-xs text-slate-400">TỐC ĐỘ BƠM TIÊM ĐIỆN</div>
+                  <div class="flex items-baseline space-x-2">
+                    <span id="morphine-pump-rate" class="text-4xl sm:text-5xl font-extrabold font-mono text-rose-400 tracking-tight">0.0</span>
+                    <span class="text-lg font-mono text-slate-300">ml/h</span>
+                  </div>
+                  <div class="text-xs text-slate-400 mt-1">Nồng độ: <span id="morphine-conc-disp" class="text-rose-300 font-semibold">1.0 mg/ml</span></div>
+                </div>
+                <div class="border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4 space-y-1 text-xs font-mono">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Liều chỉ định:</span>
+                    <span id="morphine-disp-mgkgh" class="text-white font-bold">0.03 mg/kg/giờ</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Tổng liều/giờ:</span>
+                    <span id="morphine-disp-tot-mgh" class="text-white font-bold">1.8 mg/giờ</span>
+                  </div>
+                  <div class="flex justify-between text-amber-300">
+                    <span>Chất chuyển hóa thận:</span>
+                    <span class="font-bold">M6G & M3G</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Morphine Slider -->
+            <div class="space-y-3 pt-2">
+              <div class="flex justify-between items-center">
+                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Duy trì kiểm soát đau sau mổ lớn / ICU:
+                </label>
+                <div class="flex items-center space-x-2">
+                  <input type="number" id="morphine-slider-input" min="0.01" max="0.10" step="0.01" value="0.03" onchange="setMorphineDose(this.value)"
+                    class="w-16 px-2 py-0.5 text-center font-mono font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-slate-800 rounded border border-rose-200 dark:border-slate-700">
+                  <span class="text-xs font-medium text-slate-500">mg/kg/giờ</span>
+                </div>
+              </div>
+              <input type="range" id="morphine-range" min="0.01" max="0.10" step="0.005" value="0.03" class="w-full" oninput="setMorphineDose(this.value)">
+              
+              <div class="grid grid-cols-4 gap-2 pt-1">
+                <button onclick="setMorphineDose(0.015)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-700 dark:text-slate-300 font-medium">0.015 (Khởi đầu)</button>
+                <button onclick="setMorphineDose(0.03)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-700 dark:text-slate-300 font-medium">0.03 (Trung bình)</button>
+                <button onclick="setMorphineDose(0.05)" class="py-1 px-2 text-xs rounded bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-700 dark:text-slate-300 font-medium">0.05 (Đau nhiều)</button>
+                <button onclick="setMorphineDose(0.08)" class="py-1 px-2 text-xs rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-medium hover:bg-rose-100">0.08 (Liều cao)</button>
+              </div>
+            </div>
+
+            <!-- Morphine Bolus Section -->
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Liều Bolus Cắt Cơn Đau Ngắt Quãng / Phù Phổi Cấp</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                  <div class="text-xs text-slate-500 dark:text-slate-400">Bolus giảm đau ngắt quãng (0.05 - 0.1 mg/kg):</div>
+                  <div class="text-lg font-bold font-mono text-rose-600 dark:text-rose-400" id="morphine-bolus-pain">3.0 - 6.0 mg</div>
+                  <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-0.5">Pha thành 10ml NaCl 0.9% (1mg/ml), tiêm chậm trong 4-5 phút</div>
+                </div>
+                <div class="p-3 rounded-xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800">
+                  <div class="text-xs text-sky-700 dark:text-sky-300 font-medium">Phù phổi cấp huyết động (Suy tim trái):</div>
+                  <div class="text-lg font-bold font-mono text-sky-600 dark:text-sky-400">2 - 3 mg IV</div>
+                  <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-0.5">Giảm tiền gánh, giảm lo âu giao cảm và khó thở</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Morphine Renal Toxicity Warning & Antidote Naloxone -->
+        <div class="lg:col-span-5 space-y-4">
+          <div id="morphine-alert" class="p-4 rounded-2xl border transition-all duration-200">
+            <!-- Dynamic condition alert -->
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Cảnh báo ngộ độc M6G & Giải độc Naloxone
+            </h4>
+            <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2 list-disc list-inside">
+              <li><strong class="text-rose-600 dark:text-rose-400">ĐẶC BIỆT NGUY HIỂM Ở SUY THẬN:</strong> Morphine chuyển hóa thành <strong>Morphine-6-glucuronide (M6G)</strong> (gây ức chế thở mạnh hơn morphine) và <strong>M3G</strong> (gây co giật, rung giật cơ). Cả hai tích lũy nặng nề khi eGFR &lt; 30-50 ml/phút. <em>Nên chuyển sang Fentanyl.</em></li>
+              <li><strong class="text-slate-800 dark:text-slate-100">Phóng thích Histamine:</strong> Dễ gây tụt huyết áp và nguy cơ co thắt phế quản ở bệnh nhân hen.</li>
+              <li><strong class="text-slate-800 dark:text-slate-100">Thuốc giải độc Naloxone:</strong> Ống 0.4mg/1ml. Pha loãng vào 9ml NaCl 0.9% (thành 0.04mg/ml). Tiêm tĩnh mạch từng nấc 0.04 - 0.08mg mỗi 2-3 phút đến khi thở tự nhiên &gt; 10 lần/phút. <em>Tránh tiêm bolus ồ ạt 0.4mg vì gây cơn bão giao cảm và phù phổi cấp dội!</em></li>
+            </ul>
+            <div class="pt-2">
+              <button onclick="copyOrder('Morphine')" class="w-full py-2 px-3 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                Copy Y Lệnh Bơm Tiêm Điện Morphine
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- VIEW 6: SUMMARY TABLE (ALL-AT-A-GLANCE) -->
+    <div id="view-overview" class="drug-view space-y-6 hidden">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Bảng Đối Chiếu 5 Thuốc Với Cân Nặng <span id="summary-weight-disp" class="text-sky-600 dark:text-sky-400 font-mono">60kg</span></h2>
+            <p class="text-xs text-slate-500">Tốc độ bơm tiêm điện và liều bolus khuyến cáo tại giường bệnh</p>
+          </div>
+          <div class="text-xs font-medium px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            Nồng độ chuẩn ICU Việt Nam
+          </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 font-semibold text-slate-700 dark:text-slate-200">
+                <th class="p-3">Thuốc & Hàm lượng</th>
+                <th class="p-3">Chỉ định chính</th>
+                <th class="p-3">Liều Bolus (Tiêm chậm)</th>
+                <th class="p-3">Liều Duy trì / giờ</th>
+                <th class="p-3">Tốc độ Bơm tiêm điện</th>
+                <th class="p-3">Lưu ý nguy cơ</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-slate-600 dark:text-slate-300">
+              <!-- Propofol Row -->
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold text-teal-600 dark:text-teal-400 font-sans">
+                  Propofol 1%<br><span class="text-[10px] text-slate-400 font-mono font-normal">200mg/20ml</span>
+                </td>
+                <td class="p-3 font-sans">An thần thở máy, khởi mê RSI</td>
+                <td class="p-3" id="sum-prop-bolus">90 - 150 mg (9 - 15 ml)</td>
+                <td class="p-3" id="sum-prop-mgh">72 mg/h (20 µg/kg/p)</td>
+                <td class="p-3 font-bold text-teal-600 dark:text-teal-400 text-sm" id="sum-prop-rate">7.2 ml/h</td>
+                <td class="p-3 font-sans text-[11px] text-slate-500">Tụt HA, PRIS nếu &gt;4mg/kg/h. 1.1 kcal/ml.</td>
+              </tr>
+
+              <!-- Midazolam Row -->
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold text-amber-600 dark:text-amber-400 font-sans">
+                  Midazolam<br><span class="text-[10px] text-slate-400 font-mono font-normal">5mg/5ml (1mg/ml)</span>
+                </td>
+                <td class="p-3 font-sans">Co giật, an thần sốc/kháng propofol</td>
+                <td class="p-3" id="sum-mida-bolus">1.2 - 3.0 mg (1.2 - 3 ml)</td>
+                <td class="p-3" id="sum-mida-mgh">3.0 mg/h (0.05 mg/kg/h)</td>
+                <td class="p-3 font-bold text-amber-600 dark:text-amber-400 text-sm" id="sum-mida-rate">3.0 ml/h (pha 1mg/ml)</td>
+                <td class="p-3 font-sans text-[11px] text-slate-500">Gây sảng Delirium, tích lũy kéo dài ở suy thận.</td>
+              </tr>
+
+              <!-- Diazepam Row -->
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold text-indigo-600 dark:text-indigo-400 font-sans">
+                  Diazepam<br><span class="text-[10px] text-slate-400 font-mono font-normal">10mg/2ml (5mg/ml)</span>
+                </td>
+                <td class="p-3 font-sans">Cắt co giật cấp, cai rượu (DTs)</td>
+                <td class="p-3" id="sum-dia-bolus">6.0 - 10.0 mg (1.2 - 2 ml)</td>
+                <td class="p-3 text-rose-500 font-sans font-semibold">KHÔNG TRUYỀN ICU</td>
+                <td class="p-3 text-slate-400 font-sans">Chỉ dùng Bolus</td>
+                <td class="p-3 font-sans text-[11px] text-slate-500">Bán thải 48-100h. Đau buốt mạch do propylene glycol.</td>
+              </tr>
+
+              <!-- Fentanyl Row -->
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold text-blue-600 dark:text-blue-400 font-sans">
+                  Fentanyl<br><span class="text-[10px] text-slate-400 font-mono font-normal">250µg/5ml (50µg/ml)</span>
+                </td>
+                <td class="p-3 font-sans">Analgosedation, đau cấp, suy thận</td>
+                <td class="p-3" id="sum-fen-bolus">60 - 120 µg (1.2 - 2.4 ml)</td>
+                <td class="p-3" id="sum-fen-mcgh">60 µg/h (1.0 µg/kg/h)</td>
+                <td class="p-3 font-bold text-blue-600 dark:text-blue-400 text-sm" id="sum-fen-rate">6.0 ml/h (pha 10µg/ml)</td>
+                <td class="p-3 font-sans text-[11px] text-slate-500">An toàn ở suy thận. Tiêm nhanh gây cứng ngực.</td>
+              </tr>
+
+              <!-- Morphine Row -->
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold text-rose-600 dark:text-rose-400 font-sans">
+                  Morphine<br><span class="text-[10px] text-slate-400 font-mono font-normal">10mg/1ml</span>
+                </td>
+                <td class="p-3 font-sans">Đau sau mổ, phù phổi cấp suy tim</td>
+                <td class="p-3" id="sum-mor-bolus">3.0 - 6.0 mg</td>
+                <td class="p-3" id="sum-mor-mgh">1.8 mg/h (0.03 mg/kg/h)</td>
+                <td class="p-3 font-bold text-rose-600 dark:text-rose-400 text-sm" id="sum-mor-rate">1.8 ml/h (pha 1mg/ml)</td>
+                <td class="p-3 font-sans text-[11px] text-rose-500 font-semibold">Tích lũy M6G gây ngừng thở ở suy thận. Giải phóng histamine.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: RASS Scale & Information -->
+  <div id="infoModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Thang Điểm Kích Động - An Thần Richmond (RASS)
+        </h3>
+        <button onclick="closeModal('infoModal')" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-600 dark:text-slate-400">
+          Mục tiêu an thần hiện đại theo khuyến cáo SCCM PADIS là <strong>An thần nhẹ (RASS -2 đến 0)</strong> để rút ngắn thời gian thở máy và giảm tỷ lệ mê sảng.
+        </p>
+
+        <div class="border rounded-xl overflow-hidden divide-y divide-slate-200 dark:divide-slate-800 border-slate-200 dark:border-slate-800">
+          <div class="flex p-2.5 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 font-medium">
+            <span class="w-12 font-bold font-mono">+4</span>
+            <span class="w-32 font-bold">Đối đầu</span>
+            <span class="flex-1">Hung hăng hoặc bạo lực; gây nguy hiểm trực tiếp cho nhân viên</span>
+          </div>
+          <div class="flex p-2.5 bg-rose-50/50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400">
+            <span class="w-12 font-bold font-mono">+3</span>
+            <span class="w-32 font-semibold">Rất kích động</span>
+            <span class="flex-1">Kéo hoặc tháo ống, catheter hoặc có hành vi hung hăng</span>
+          </div>
+          <div class="flex p-2.5 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300">
+            <span class="w-12 font-bold font-mono">+2</span>
+            <span class="w-32 font-semibold">Kích động</span>
+            <span class="flex-1">Cử động không mục đích thường xuyên hoặc chống máy</span>
+          </div>
+          <div class="flex p-2.5 bg-amber-50/50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400">
+            <span class="w-12 font-bold font-mono">+1</span>
+            <span class="w-32 font-semibold">Bức rức</span>
+            <span class="flex-1">Lo lắng, sợ hãi, không có hành động hung hăng mạnh mẽ</span>
+          </div>
+          <div class="flex p-2.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 font-bold border-y-2 border-emerald-500">
+            <span class="w-12 font-mono">0</span>
+            <span class="w-32">Tỉnh thức & bình tĩnh</span>
+            <span class="flex-1">Mục tiêu lý tưởng không thở máy hoặc đang cai máy</span>
+          </div>
+          <div class="flex p-2.5 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-200 font-semibold">
+            <span class="w-12 font-mono">-1</span>
+            <span class="w-32">Mơ màng</span>
+            <span class="flex-1">Gọi tỉnh dậy trong &gt;10 giây, giao tiếp bằng mắt</span>
+          </div>
+          <div class="flex p-2.5 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-200 font-semibold">
+            <span class="w-12 font-mono">-2</span>
+            <span class="w-32">An thần nhẹ</span>
+            <span class="flex-1">Mục tiêu thở máy ICU chuẩn: Gọi tỉnh trong &lt;10 giây</span>
+          </div>
+          <div class="flex p-2.5 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300">
+            <span class="w-12 font-mono">-3</span>
+            <span class="w-32">An thần vừa</span>
+            <span class="flex-1">Chuyển động hoặc mở mắt đáp ứng lời nói (không giao tiếp mắt)</span>
+          </div>
+          <div class="flex p-2.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300">
+            <span class="w-12 font-mono">-4</span>
+            <span class="w-32">An thần sâu</span>
+            <span class="flex-1">Không đáp ứng lời nói, chỉ có cử động khi kích thích vật lý</span>
+          </div>
+          <div class="flex p-2.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-200 font-bold">
+            <span class="w-12 font-mono">-5</span>
+            <span class="w-32">Hôn mê / Liệt cơ</span>
+            <span class="flex-1">Không đáp ứng với giọng nói hoặc kích thích vật lý</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button onclick="closeModal('infoModal')" class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-200">
+          Đóng cửa sổ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Box -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-xl flex items-center space-x-2 text-xs font-medium">
+      <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      <span id="toastMsg">Đã sao chép y lệnh thành công!</span>
+    </div>
+  </div>
+
+  <script>
+    /* Clinical state management */
+    const state = {
+      weight: 60,
+      activeDrug: 'propofol',
+      flags: {
+        aki: false,
+        shock: false,
+        elderly: false,
+        liver: false,
+      },
+      // Doses
+      propofolDoseMcg: 20, // mcg/kg/min
+      midazolamDoseMg: 0.05, // mg/kg/h
+      midazolamRecipe: '1mg_ml', // 1mg/ml vs 0.5mg/ml
+      fentanylDoseMcg: 1.0, // mcg/kg/h
+      fentanylRecipe: 'dilute10', // dilute10 (10 mcg/ml) vs pure50 (50 mcg/ml)
+      morphineDoseMg: 0.03, // mg/kg/h
+      morphineRecipe: '1mg_ml', // 1mg/ml vs 0.4mg/ml
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Initialize theme based on preference
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+        updateThemeIcons();
+      }
+      
+      const weightInput = document.getElementById('weightInput');
+      weightInput.addEventListener('input', (e) => {
+        let val = parseFloat(e.target.value);
+        if (isNaN(val)) val = 60;
+        if (val < 20) val = 20;
+        if (val > 200) val = 200;
+        state.weight = val;
+        document.getElementById('weightSlider').value = Math.min(Math.max(val, 30), 130);
+        recalculateAll();
+      });
+
+      switchTab('propofol');
+      recalculateAll();
+    });
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      updateThemeIcons();
+    }
+
+    function updateThemeIcons() {
+      const isDark = document.documentElement.classList.contains('dark');
+      document.getElementById('sunIcon').classList.toggle('hidden', !isDark);
+      document.getElementById('moonIcon').classList.toggle('hidden', isDark);
+    }
+
+    function setWeight(w) {
+      state.weight = w;
+      document.getElementById('weightInput').value = w;
+      document.getElementById('weightSlider').value = w;
+      recalculateAll();
+    }
+
+    function updateWeightFromSlider(w) {
+      state.weight = parseFloat(w);
+      document.getElementById('weightInput').value = w;
+      recalculateAll();
+    }
+
+    function switchTab(drugId) {
+      state.activeDrug = drugId;
+      document.querySelectorAll('.drug-tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white', 'shadow-sm');
+        btn.classList.add('text-slate-600', 'dark:text-slate-400');
+      });
+
+      const activeBtn = document.getElementById(`tabBtn-${drugId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white', 'shadow-sm');
+        activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+      }
+
+      document.querySelectorAll('.drug-view').forEach(view => {
+        view.classList.add('hidden');
+      });
+
+      const currentView = document.getElementById(`view-${drugId}`);
+      if (currentView) {
+        currentView.classList.remove('hidden');
+      }
+    }
+
+    function setPropofolDose(mcg) {
+      state.propofolDoseMcg = parseFloat(mcg);
+      document.getElementById('propofol-range').value = mcg;
+      document.getElementById('propofol-slider-input').value = mcg;
+      recalculatePropofol();
+    }
+
+    function setMidazolamRecipe(rec) {
+      state.midazolamRecipe = rec;
+      const b1 = document.getElementById('mida-recipe-1');
+      const b05 = document.getElementById('mida-recipe-05');
+      if (rec === '1mg_ml') {
+        b1.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-amber-500 text-white border-amber-600';
+        b05.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700';
+        document.getElementById('midazolam-conc-disp').innerText = '1.0 mg/ml';
+      } else {
+        b05.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-amber-500 text-white border-amber-600';
+        b1.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700';
+        document.getElementById('midazolam-conc-disp').innerText = '0.5 mg/ml';
+      }
+      recalculateMidazolam();
+    }
+
+    function setMidazolamDose(mg) {
+      state.midazolamDoseMg = parseFloat(mg);
+      document.getElementById('midazolam-range').value = mg;
+      document.getElementById('midazolam-slider-input').value = mg;
+      recalculateMidazolam();
+    }
+
+    function setFentanylRecipe(rec) {
+      state.fentanylRecipe = rec;
+      const b10 = document.getElementById('fenta-recipe-10');
+      const b50 = document.getElementById('fenta-recipe-50');
+      if (rec === 'dilute10') {
+        b10.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-blue-600 text-white border-blue-700';
+        b50.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700';
+        document.getElementById('fentanyl-conc-disp').innerText = '10 µg/ml';
+      } else {
+        b50.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-blue-600 text-white border-blue-700';
+        b10.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700';
+        document.getElementById('fentanyl-conc-disp').innerText = '50 µg/ml';
+      }
+      recalculateFentanyl();
+    }
+
+    function setFentanylDose(mcg) {
+      state.fentanylDoseMcg = parseFloat(mcg);
+      document.getElementById('fentanyl-range').value = mcg;
+      document.getElementById('fentanyl-slider-input').value = mcg;
+      recalculateFentanyl();
+    }
+
+    function setMorphineRecipe(rec) {
+      state.morphineRecipe = rec;
+      const b1 = document.getElementById('morph-recipe-1');
+      const b04 = document.getElementById('morph-recipe-04');
+      if (rec === '1mg_ml') {
+        b1.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-rose-600 text-white border-rose-700';
+        b04.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700';
+        document.getElementById('morphine-conc-disp').innerText = '1.0 mg/ml';
+      } else {
+        b04.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-rose-600 text-white border-rose-700';
+        b1.className = 'px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700';
+        document.getElementById('morphine-conc-disp').innerText = '0.4 mg/ml';
+      }
+      recalculateMorphine();
+    }
+
+    function setMorphineDose(mg) {
+      state.morphineDoseMg = parseFloat(mg);
+      document.getElementById('morphine-range').value = mg;
+      document.getElementById('morphine-slider-input').value = mg;
+      recalculateMorphine();
+    }
+
+    function recalculatePropofol() {
+      const W = state.weight;
+      const mcg = state.propofolDoseMcg;
+      
+      // Rate ml/h = (mcg * W * 60) / 10,000 mcg/ml
+      const rateMlH = (mcg * W * 60) / 10000;
+      const mgKgH = (mcg * 60) / 1000;
+      const dailyKcal = (rateMlH * 24 * 1.1).toFixed(0);
+
+      document.getElementById('propofol-pump-rate').innerText = rateMlH.toFixed(1);
+      document.getElementById('propofol-disp-mcg').innerText = `${mcg.toFixed(1)} µg/kg/phút`;
+      document.getElementById('propofol-disp-mg').innerText = `${mgKgH.toFixed(2)} mg/kg/giờ`;
+      document.getElementById('propofol-disp-kcal').innerText = `${dailyKcal} kcal/ngày`;
+
+      // Bolus standard 1.5 - 2.5 mg/kg
+      const stdLowMg = (W * 1.5).toFixed(0);
+      const stdHighMg = (W * 2.5).toFixed(0);
+      const stdLowMl = (stdLowMg / 10).toFixed(1);
+      const stdHighMl = (stdHighMg / 10).toFixed(1);
+
+      document.getElementById('propofol-bolus-standard').innerText = `${stdLowMg} - ${stdHighMg} mg`;
+      document.getElementById('propofol-bolus-ml-std').innerText = `Tương đương: ${stdLowMl} - ${stdHighMl} ml (IV chậm 60s)`;
+
+      // Bolus frail 1.0 - 1.5 mg/kg
+      const frailLowMg = (W * 1.0).toFixed(0);
+      const frailHighMg = (W * 1.5).toFixed(0);
+      const frailLowMl = (frailLowMg / 10).toFixed(1);
+      const frailHighMl = (frailHighMg / 10).toFixed(1);
+
+      document.getElementById('propofol-bolus-frail').innerText = `${frailLowMg} - ${frailHighMg} mg`;
+      document.getElementById('propofol-bolus-ml-frail').innerText = `Tương đương: ${frailLowMl} - ${frailHighMl} ml (rất chậm)`;
+
+      // Dynamic Propofol Safety Alert
+      const alertBox = document.getElementById('propofol-alert');
+      if (mgKgH > 4.0) {
+        alertBox.className = 'p-4 rounded-2xl border bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold flex items-center gap-1.5 text-sm text-rose-600 dark:text-rose-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            VƯỢT NGƯỠNG AN TOÀN TRẦN (> 4.0 mg/kg/h)
+          </div>
+          <div>Liều hiện tại là <strong>${mgKgH.toFixed(2)} mg/kg/h</strong>. Nguy cơ rất cao xảy ra <strong>Hội chứng truyền Propofol (PRIS)</strong> gây suy tim cấp, toan lactic kháng trị, tiêu cơ vân. Xem xét phối hợp thêm Fentanyl để giảm nhu cầu an thần.</div>
+        `;
+      } else if (state.flags.shock) {
+        alertBox.className = 'p-4 rounded-2xl border bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900 text-amber-800 dark:text-amber-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            CẢNH BÁO BỆNH NHÂN TỤT HUYẾT ÁP / SỐC
+          </div>
+          <div>Propofol gây giãn mạch toàn thân và ức chế co bóp cơ tim trực tiếp. <strong>Tránh bolus nhanh</strong>. Nên giảm liều khởi đầu xuống 5 µg/kg/phút và chuẩn bị sẵn Noradrenaline.</div>
+        `;
+      } else {
+        alertBox.className = 'p-4 rounded-2xl border bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-900 text-teal-800 dark:text-teal-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-teal-700 dark:text-teal-300">Liều trong giới hạn an toàn</div>
+          <div>Mục tiêu thông thường: 5 - 50 µg/kg/phút (0.3 - 3.0 mg/kg/h). Chuẩn độ mỗi 5 - 10 phút đến khi đạt RASS mục tiêu.</div>
+        `;
+      }
+    }
+
+    function recalculateMidazolam() {
+      const W = state.weight;
+      const mgKgH = state.midazolamDoseMg;
+      const totMgH = mgKgH * W;
+      const conc = state.midazolamRecipe === '1mg_ml' ? 1.0 : 0.5;
+      const rateMlH = totMgH / conc;
+
+      document.getElementById('midazolam-pump-rate').innerText = rateMlH.toFixed(1);
+      document.getElementById('midazolam-disp-mgkgh').innerText = `${mgKgH.toFixed(2)} mg/kg/giờ`;
+      document.getElementById('midazolam-disp-tot-mgh').innerText = `${totMgH.toFixed(2)} mg/giờ`;
+
+      // Bolus Procedural (0.02 - 0.05 mg/kg)
+      const procLow = (W * 0.02).toFixed(1);
+      const procHigh = (W * 0.05).toFixed(1);
+      document.getElementById('midazolam-bolus-proc').innerText = `${procLow} - ${procHigh} mg`;
+      document.getElementById('midazolam-bolus-proc-ml').innerText = `Tương đương: ${procLow} - ${procHigh} ml (ống 1mg/ml) tiêm IV chậm`;
+
+      // Bolus Seizure (0.1 - 0.2 mg/kg)
+      const szLow = (W * 0.1).toFixed(1);
+      const szHigh = (W * 0.2).toFixed(1);
+      document.getElementById('midazolam-bolus-seizure').innerText = `${szLow} - ${szHigh} mg`;
+      document.getElementById('midazolam-bolus-seizure-ml').innerText = `Tiêm IV chậm trong 2-3 phút (hoặc tiêm bắp 10mg khi chưa có IV)`;
+
+      // Midazolam Alert
+      const alertBox = document.getElementById('midazolam-alert');
+      if (state.flags.aki) {
+        alertBox.className = 'p-4 rounded-2xl border bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold flex items-center gap-1.5 text-sm text-rose-600 dark:text-rose-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            NGUY HIỂM TÍCH LŨY TRÊN BỆNH NHÂN SUY THẬN (AKI)
+          </div>
+          <div>Chất chuyển hóa <strong>1-hydroxymidazolam glucuronide</strong> đào thải qua thận sẽ tích tụ nồng độ cao, gây mê sâu kéo dài nhiều ngày sau ngắt truyền. Giảm liều tối đa và giãn khoảng cách đánh giá.</div>
+        `;
+      } else if (state.flags.elderly || state.flags.liver) {
+        alertBox.className = 'p-4 rounded-2xl border bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900 text-amber-800 dark:text-amber-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-amber-600 dark:text-amber-400">GIẢM CHUYỂN HÓA & NGUY CƠ SẢNG (DELIRIUM)</div>
+          <div>Độ thanh thải của Midazolam giảm mạnh ở người cao tuổi và xơ gan. Khuyến cáo giảm liều khởi đầu 30 - 50%.</div>
+        `;
+      } else {
+        alertBox.className = 'p-4 rounded-2xl border bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-amber-700 dark:text-amber-300">Khuyến nghị SCCM PADIS</div>
+          <div>Tránh duy trì Midazolam liên tục &gt; 48 giờ để phòng ngừa hội chứng mê sảng và lệ thuộc thuốc.</div>
+        `;
+      }
+    }
+
+    function recalculateDiazepam() {
+      const W = state.weight;
+      // 0.1 - 0.2 mg/kg
+      const szLow = Math.min((W * 0.1), 10).toFixed(1);
+      const szHigh = Math.min((W * 0.2), 15).toFixed(1);
+      const mlLow = (szLow / 5).toFixed(1);
+      const mlHigh = (szHigh / 5).toFixed(1);
+
+      document.getElementById('diazepam-seizure-dose').innerText = `${szLow} - ${szHigh} mg`;
+      document.getElementById('diazepam-seizure-ml').innerText = `${mlLow} - ${mlHigh} ml (Ống 10mg/2ml) tiêm IV chậm`;
+
+      // Diazepam Alert
+      const alertBox = document.getElementById('diazepam-alert');
+      if (state.flags.liver) {
+        alertBox.className = 'p-4 rounded-2xl border bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-rose-600 dark:text-rose-400">CHỐNG CHỈ ĐỊNH TƯƠNG ĐỐI TRÊN BỆNH NHÂN XƠ GAN</div>
+          <div>Thời gian bán thải của Diazepam có thể kéo dài lên tới &gt; 90 - 120 giờ ở người bệnh xơ gan, rất dễ đẩy bệnh nhân vào Hôn mê gan (Hepatic Encephalopathy).</div>
+        `;
+      } else {
+        alertBox.className = 'p-4 rounded-2xl border bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-indigo-700 dark:text-indigo-300">Kinh nghiệm tiêm thực tế</div>
+          <div>Luôn tiêm qua tĩnh mạch lớn với tốc độ không quá 2 - 5 mg/phút (ống 10mg tiêm tối thiểu trong 2 - 3 phút) để chống đau buốt và tụt huyết áp.</div>
+        `;
+      }
+    }
+
+    function recalculateFentanyl() {
+      const W = state.weight;
+      const mcgKgH = state.fentanylDoseMcg;
+      const totMcgH = mcgKgH * W;
+      const conc = state.fentanylRecipe === 'dilute10' ? 10 : 50;
+      const rateMlH = totMcgH / conc;
+
+      document.getElementById('fentanyl-pump-rate').innerText = rateMlH.toFixed(1);
+      document.getElementById('fentanyl-disp-mcgkgh').innerText = `${mcgKgH.toFixed(1)} µg/kg/giờ`;
+      document.getElementById('fentanyl-disp-tot-mcgh').innerText = `${totMcgH.toFixed(1)} µg/giờ`;
+
+      // Bolus RSI (1 - 2 mcg/kg)
+      const rsiLow = (W * 1.0).toFixed(0);
+      const rsiHigh = (W * 2.0).toFixed(0);
+      const rsiMlLow = (rsiLow / 50).toFixed(1);
+      const rsiMlHigh = (rsiHigh / 50).toFixed(1);
+      document.getElementById('fentanyl-bolus-rsi').innerText = `${rsiLow} - ${rsiHigh} µg`;
+      document.getElementById('fentanyl-bolus-rsi-ml').innerText = `Tương đương: ${rsiMlLow} - ${rsiMlHigh} ml (ống 50µg/ml) tiêm chậm > 1-2 phút`;
+
+      // Bolus acute pain (0.35 - 0.5 mcg/kg)
+      const painLow = (W * 0.35).toFixed(0);
+      const painHigh = (W * 0.5).toFixed(0);
+      const painMlLow = (painLow / 50).toFixed(1);
+      const painMlHigh = (painHigh / 50).toFixed(1);
+      document.getElementById('fentanyl-bolus-pain').innerText = `${painLow} - ${painHigh} µg`;
+      document.getElementById('fentanyl-bolus-pain-ml').innerText = `Tương đương: ${painMlLow} - ${painMlHigh} ml tiêm khi đau (VAS > 4 / CPOT > 2)`;
+
+      // Fentanyl Alert
+      const alertBox = document.getElementById('fentanyl-alert');
+      if (state.flags.aki) {
+        alertBox.className = 'p-4 rounded-2xl border bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-900 text-emerald-800 dark:text-emerald-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            LỰA CHỌN TỐI ƯU CHO BỆNH NHÂN SUY THẬN (AKI / CKD)
+          </div>
+          <div>Fentanyl chuyển hóa qua gan thành Norfentanyl không có hoạt tính độc, an toàn vượt trội so với Morphine ở bệnh nhân suy giảm chức năng thận.</div>
+        `;
+      } else {
+        alertBox.className = 'p-4 rounded-2xl border bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-blue-700 dark:text-blue-300">Chiến lược Analgesia-First</div>
+          <div>Dùng Fentanyl để dập tắt cơn đau trước khi tăng thuốc ngủ. Khi kiểm soát tốt đau, nhu cầu Propofol thường giảm từ 30 - 50%.</div>
+        `;
+      }
+    }
+
+    function recalculateMorphine() {
+      const W = state.weight;
+      const mgKgH = state.morphineDoseMg;
+      const totMgH = mgKgH * W;
+      const conc = state.morphineRecipe === '1mg_ml' ? 1.0 : 0.4;
+      const rateMlH = totMgH / conc;
+
+      document.getElementById('morphine-pump-rate').innerText = rateMlH.toFixed(1);
+      document.getElementById('morphine-disp-mgkgh').innerText = `${mgKgH.toFixed(3)} mg/kg/giờ`;
+      document.getElementById('morphine-disp-tot-mgh').innerText = `${totMgH.toFixed(2)} mg/giờ`;
+
+      // Bolus (0.05 - 0.1 mg/kg)
+      const pLow = (W * 0.05).toFixed(1);
+      const pHigh = (W * 0.1).toFixed(1);
+      document.getElementById('morphine-bolus-pain').innerText = `${pLow} - ${pHigh} mg`;
+
+      // Morphine Alert
+      const alertBox = document.getElementById('morphine-alert');
+      if (state.flags.aki) {
+        alertBox.className = 'p-4 rounded-2xl border bg-rose-100 dark:bg-rose-950 border-rose-500 text-rose-900 dark:text-rose-100 text-xs space-y-1.5 block shadow-md';
+        alertBox.innerHTML = `
+          <div class="font-extrabold flex items-center gap-1.5 text-sm text-rose-600 dark:text-rose-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            CẢNH BÁO NGUY HIỂM: BỆNH NHÂN ĐANG SUY THẬN (AKI / CKD)
+          </div>
+          <div>Chống chỉ định truyền tĩnh mạch Morphine liên tục khi eGFR &lt; 30 ml/phút. Chất chuyển hóa <strong>M6G</strong> tích lũy gây ức chế hô hấp và hôn mê sâu kéo dài; <strong>M3G</strong> gây rung giật cơ và co giật. <strong>Bắt buộc khuyến cáo chuyển sang Fentanyl!</strong></div>
+        `;
+      } else if (state.flags.shock) {
+        alertBox.className = 'p-4 rounded-2xl border bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900 text-amber-800 dark:text-amber-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-amber-600 dark:text-amber-400">THẬN TRỌNG PHÓNG THÍCH HISTAMINE</div>
+          <div>Morphine kích thích tế bào Mast phóng thích histamine gây giãn mạch và tụt huyết áp. Thận trọng trên bệnh nhân đang sốc hoặc huyết động bất ổn.</div>
+        `;
+      } else {
+        alertBox.className = 'p-4 rounded-2xl border bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs space-y-1 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-rose-700 dark:text-rose-300">Chỉ định phù hợp nhất</div>
+          <div>Kiểm soát đau sau phẫu thuật lồng ngực/ổ bụng lớn và giảm khó thở trong suy tim trái cấp (phù phổi cấp huyết động).</div>
+        `;
+      }
+    }
+
+    function recalculateOverview() {
+      const W = state.weight;
+      document.getElementById('summary-weight-disp').innerText = `${W}kg`;
+
+      // Propofol
+      const pStdLow = (W * 1.5).toFixed(0);
+      const pStdHigh = (W * 2.5).toFixed(0);
+      const pStdMlLow = (pStdLow / 10).toFixed(1);
+      const pStdMlHigh = (pStdHigh / 10).toFixed(1);
+      const pRate = ((20 * W * 60) / 10000).toFixed(1);
+      document.getElementById('sum-prop-bolus').innerText = `${pStdLow} - ${pStdHigh} mg (${pStdMlLow} - ${pStdMlHigh} ml)`;
+      document.getElementById('sum-prop-mgh').innerText = `${(1.2 * W).toFixed(1)} mg/h (20 µg/kg/p)`;
+      document.getElementById('sum-prop-rate').innerText = `${pRate} ml/h`;
+
+      // Midazolam
+      const mProcLow = (W * 0.02).toFixed(1);
+      const mProcHigh = (W * 0.05).toFixed(1);
+      const mRate = (0.05 * W).toFixed(1);
+      document.getElementById('sum-mida-bolus').innerText = `${mProcLow} - ${mProcHigh} mg (${mProcLow} - ${mProcHigh} ml)`;
+      document.getElementById('sum-mida-mgh').innerText = `${(0.05 * W).toFixed(2)} mg/h (0.05 mg/kg/h)`;
+      document.getElementById('sum-mida-rate').innerText = `${mRate} ml/h (loại 1mg/ml)`;
+
+      // Diazepam
+      const dSzLow = Math.min((W * 0.1), 10).toFixed(1);
+      const dSzHigh = Math.min((W * 0.2), 15).toFixed(1);
+      const dMlLow = (dSzLow / 5).toFixed(1);
+      const dMlHigh = (dSzHigh / 5).toFixed(1);
+      document.getElementById('sum-dia-bolus').innerText = `${dSzLow} - ${dSzHigh} mg (${dMlLow} - ${dMlHigh} ml)`;
+
+      // Fentanyl
+      const fRsiLow = (W * 1.0).toFixed(0);
+      const fRsiHigh = (W * 2.0).toFixed(0);
+      const fRsiMlLow = (fRsiLow / 50).toFixed(1);
+      const fRsiMlHigh = (fRsiHigh / 50).toFixed(1);
+      const fRate = ((1.0 * W) / 10).toFixed(1); // at 10 mcg/ml
+      document.getElementById('sum-fen-bolus').innerText = `${fRsiLow} - ${fRsiHigh} µg (${fRsiMlLow} - ${fRsiMlHigh} ml)`;
+      document.getElementById('sum-fen-mcgh').innerText = `${(1.0 * W).toFixed(1)} µg/h (1.0 µg/kg/h)`;
+      document.getElementById('sum-fen-rate').innerText = `${fRate} ml/h (pha 10µg/ml)`;
+
+      // Morphine
+      const moLow = (W * 0.05).toFixed(1);
+      const moHigh = (W * 0.1).toFixed(1);
+      const moRate = (0.03 * W).toFixed(1);
+      document.getElementById('sum-mor-bolus').innerText = `${moLow} - ${moHigh} mg`;
+      document.getElementById('sum-mor-mgh').innerText = `${(0.03 * W).toFixed(2)} mg/h (0.03 mg/kg/h)`;
+      document.getElementById('sum-mor-rate').innerText = `${moRate} ml/h (pha 1mg/ml)`;
+    }
+
+    function recalculateAll() {
+      // Read Flags
+      state.flags.aki = document.getElementById('flagAki').checked;
+      state.flags.shock = document.getElementById('flagShock').checked;
+      state.flags.elderly = document.getElementById('flagElderly').checked;
+      state.flags.liver = document.getElementById('flagLiver').checked;
+
+      // Update Clinical Alert Banner
+      const alertBanner = document.getElementById('clinicalAlertBanner');
+      if (state.flags.aki) {
+        alertBanner.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800 flex items-center gap-2';
+        alertBanner.innerHTML = `⚠️ <strong>Cảnh báo suy thận:</strong> Tránh Morphine do tích tụ M6G. Nên ưu tiên Fentanyl làm giảm đau chính. Giảm liều Midazolam.`;
+      } else if (state.flags.shock) {
+        alertBanner.className = 'p-2.5 rounded-lg text-xs font-semibold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800 flex items-center gap-2';
+        alertBanner.innerHTML = `⚡ <strong>Cảnh báo sốc tụt HA:</strong> Giảm 50% liều bolus Propofol; ưu tiên Fentanyl vì không gây giãn mạch do histamine.`;
+      } else if (state.flags.elderly || state.flags.liver) {
+        alertBanner.className = 'p-2.5 rounded-lg text-xs font-semibold bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-200 border border-sky-300 dark:border-sky-800 flex items-center gap-2';
+        alertBanner.innerHTML = `🩺 <strong>Người cao tuổi / Suy gan:</strong> Bán thải kéo dài. Giảm liều khởi đầu và chuẩn độ bước chậm.`;
+      } else {
+        alertBanner.className = 'hidden';
+      }
+
+      recalculatePropofol();
+      recalculateMidazolam();
+      recalculateDiazepam();
+      recalculateFentanyl();
+      recalculateMorphine();
+      recalculateOverview();
+    }
+
+    function copyOrder(drug) {
+      let orderText = '';
+      const W = state.weight;
+      if (drug === 'Propofol') {
+        const rate = document.getElementById('propofol-pump-rate').innerText;
+        const mcg = state.propofolDoseMcg.toFixed(1);
+        const mg = ((mcg * 60) / 1000).toFixed(2);
+        orderText = `[Y LỆNH ICU] Propofol 1% (200mg/20ml) nguyên chất: Truyền Bơm Tiêm Điện tốc độ ${rate} ml/h (tương đương ${mcg} mcg/kg/phút = ${mg} mg/kg/h) trên bệnh nhân ${W}kg. Mục tiêu RASS: -2 đến 0. Theo dõi HA và Triglyceride.`;
+      } else if (drug === 'Midazolam') {
+        const rate = document.getElementById('midazolam-pump-rate').innerText;
+        const recipeText = state.midazolamRecipe === '1mg_ml' ? '50mg/50ml (1 mg/ml)' : '25mg/50ml (0.5 mg/ml)';
+        orderText = `[Y LỆNH ICU] Midazolam BTĐ pha ${recipeText}: Truyền tốc độ ${rate} ml/h (${state.midazolamDoseMg} mg/kg/h) trên bệnh nhân ${W}kg. Mục tiêu RASS. Đánh giá cai an thần hàng ngày (SAT).`;
+      } else if (drug === 'Fentanyl') {
+        const rate = document.getElementById('fentanyl-pump-rate').innerText;
+        const recipeText = state.fentanylRecipe === 'dilute10' ? '500mcg/50ml NaCl 0.9% (10 mcg/ml)' : 'Nguyên chất 50 mcg/ml';
+        orderText = `[Y LỆNH ICU] Fentanyl BTĐ pha ${recipeText}: Truyền tốc độ ${rate} ml/h (${state.fentanylDoseMcg} mcg/kg/h) trên bệnh nhân ${W}kg. Mục tiêu BPS < 5 hoặc CPOT < 2.`;
+      } else if (drug === 'Morphine') {
+        const rate = document.getElementById('morphine-pump-rate').innerText;
+        const recipeText = state.morphineRecipe === '1mg_ml' ? '50mg/50ml NaCl 0.9% (1 mg/ml)' : '20mg/50ml NaCl 0.9% (0.4 mg/ml)';
+        orderText = `[Y LỆNH ICU] Morphine BTĐ pha ${recipeText}: Truyền tốc độ ${rate} ml/h (${state.morphineDoseMg} mg/kg/h) trên bệnh nhân ${W}kg. Theo dõi tần số thở, đồng tử và chức năng thận.`;
+      }
+
+      // Safe clipboard copy mechanism for iframes
+      const el = document.createElement('textarea');
+      el.value = orderText;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+
+      showToast(`Đã sao chép y lệnh ${drug} vào Clipboard!`);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.innerText = msg;
+      toast.classList.remove('opacity-0', 'translate-y-20', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-20', 'pointer-events-none');
+      }, 3000);
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
